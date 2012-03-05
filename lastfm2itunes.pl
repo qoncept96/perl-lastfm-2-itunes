@@ -69,7 +69,7 @@ for my $i (0 .. $weeks_charts_data->getLength-1) {
 		print sprintf("[v] Track \"%s\" played %d time(s)\n", _866("$tag_artist - $tag_title"), $tag_play_count) if($verbose);
 
 		$lastfm_track_playcount{lc($tag_artist)}{lc($tag_title)} += $tag_play_count;
-		$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = strftime("%Y-%m-%d %H:%M:%S", localtime($from));
+		$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = strftime("%Y-%m-%d %H:%M:%S", localtime($to));
 	}
 }
 
@@ -86,11 +86,11 @@ if($iTunes_LIB) {
 		my $tmp_last = $lastfm_track_playlast{lc($trk->artist())}{lc($trk->name())};
 
 		if($trk->playedCount() < $tmp_count) {
-			printf("Updating track %5d: \"%s\"...\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name()));
+			printf("Updating track %5d: \"%s\"\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name()));
 			$trk->{playedCount} = $tmp_count;
 			$trk->{playedDate} = $tmp_last;
 		} else {
-			printf("Skipping track %5d: \"%s\"...\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name())) if($verbose);
+			printf("Skipping track %5d: \"%s\"\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name())) if($verbose);
 		}
 	}
 }
