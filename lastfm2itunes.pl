@@ -11,13 +11,13 @@ $Win32::OLE::CP = CP_UTF8;
 my $parser = new XML::DOM::Parser;
 
 # User static settings
-my $username = '';		# <= Put your username here
+my $username = 'TedIrens';		# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $chart_list_url   = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklychartlist.xml';
 my $weekly_chart_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklytrackchart.xml?from=<FROM>&to=<TO>';
-my $version = 'v0.1 (05.03.2012)';
+my $version = 'v0.2 (05.03.2012)';
 
 # Script dynamic variables
 my %lastfm_track_playcount = ();
@@ -26,7 +26,7 @@ my %lastfm_track_playlast = ();
 print "iTunes Library Updater " . $version . "\n";
 print "Copyright (c) 2012 Roman Gemini (roman_gemini\@ukr.net)\n\n";
 if($username eq '') {
-	print "Set variable '\$username' first!\n";
+	print "Please, set variable '\$username' first!\n";
 	print "Press <ENTER> to exit...";
 	<>;
 	exit;
@@ -66,32 +66,31 @@ for my $i (0 .. $weeks_charts_data->getLength-1) {
 		my $tag_title = $track->getElementsByTagName("name")->item(0)->getFirstChild->getData();
 		my $tag_artist = $track->getElementsByTagName("artist")->item(0)->getFirstChild->getData();
 		my $tag_play_count = $track->getElementsByTagName("playcount")->item(0)->getFirstChild->getData();
-		print sprintf("\tTrack \"%s\" played %d time(s)\n", _866("$tag_artist - $tag_title"), $tag_play_count) if($verbose);
-
+		print sprintf("[v] Track \"%s\" played %d time(s)\n", _866("$tag_artist - $tag_title"), $tag_play_count) if($verbose);
 
 		$lastfm_track_playcount{lc($tag_artist)}{lc($tag_title)} += $tag_play_count;
 		$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = strftime("%Y-%m-%d %H:%M:%S", localtime($from));
 	}
 }
 
-print "\nScanning iTunes library...\n";
-for my $k_artist (sort keys %lastfm_track_playcount) {
-	for my $k_title (sort keys %{$lastfm_track_playcount{$k_artist}}) {
-		print sprintf("\tSearching library for \"%s\"\n", _866("$k_artist - $k_title")) if($verbose);
-		my $tmp_count = $lastfm_track_playcount{$k_artist}{$k_title};
-		my $tmp_last = $lastfm_track_playlast{$k_artist}{$k_title};
-		my $iTunes_DATA = $iTunes->LibraryPlaylist;
-		my $iTunes_LIB = $iTunes_DATA->Search("$k_artist $k_title", 1);
-		if($iTunes_LIB) {
-			for my $t (1 .. $iTunes_LIB->Count) {
-				my $trk = $iTunes_LIB->Item($t);
-				if(($trk->kind() == 1) and (lc($trk->artist()) eq $k_artist) and (lc($trk->name()) eq $k_title) and ($trk->playCount()<$tmp_count)) {
-					my $trID = $trk->trackID();
-					print sprintf("\t\tUpdating \"%s\": [playCount] = '%d' [playDate] = '%s' (trackID = '%d')\n", _866("$k_artist - $k_title"), $tmp_count, $tmp_last, $trID);
-					$trk->{PlayedCount} = $tmp_count;
-					$trk->{PlayedDate} = $tmp_last;
-				}
-			}
+print "\nProcessing iTunes library...\n";
+my $iTunes_LIB = $iTunes->LibraryPlaylist->Tracks;
+if($iTunes_LIB) {
+	for my $t (1 .. $iTunes_LIB->Count) {
+		my $trk = $iTunes_LIB->Item($t);
+		next unless($trk->kind() == 1);
+
+		next unless(exists($lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())}));
+
+		my $tmp_count = $lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())};
+		my $tmp_last = $lastfm_track_playlast{lc($trk->artist())}{lc($trk->name())};
+
+		if($trk->playedCount() < $tmp_count) {
+			printf("Updating track %5d: \"%s\"...\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name()));
+			$trk->{playedCount} = $tmp_count;
+			$trk->{playedDate} = $tmp_last;
+		} else {
+			printf("Skipping track %5d: \"%s\"...\n", $trk->trackID(), _866($trk->artist() . " - " . $trk->name())) if($verbose);
 		}
 	}
 }
