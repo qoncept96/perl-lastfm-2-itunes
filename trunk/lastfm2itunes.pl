@@ -176,9 +176,9 @@ foreach my $k_artist (keys %lastfm_track_playcount) {
 }
 
 print  "+---------- iTunes Library ---------+\n";
-printf "| Number of tracks total    | %8d |\n", $iTunes_LIB->Count;
-printf "| Number of processed       | %8d |\n", $processed_tracks;
-printf "| Number of skipped         | %8d |\n", $skipped_tracks;
+printf "| Number of tracks total | %8d |\n", $iTunes_LIB->Count;
+printf "| Number of processed    | %8d |\n", $processed_tracks;
+printf "| Number of skipped      | %8d |\n", $skipped_tracks;
 print  "+---------- Last.fm Charts ---------+\n";
 printf "| Number of artists      | %8d |\n", $l_artists;
 printf "| Number of tracks       | %8d |\n", $l_tracks;
