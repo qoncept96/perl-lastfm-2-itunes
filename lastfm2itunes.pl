@@ -16,9 +16,8 @@ $Win32::OLE::CP = CP_UTF8;
 my $parser = new XML::DOM::Parser;
 
 # User static settings
-my $username = 'TedIrens';		# <= Put your username here
+my $username = '';		# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
-my $timezone_comp = 7200;     # GMT+x seconds
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
@@ -40,7 +39,7 @@ if($username eq '') {
 	<>;
 	exit;
 }
-print "Debug messages : " . ($verbose ? "YES" : "NO") . "\n";
+print "Debug messages : " . ($verbose ? "YES" : "NO") . "\n\n";
 
 print "Trying to connect to iTunes scripting interface...";
 my $iTunes = Win32::OLE->GetActiveObject('iTunes.Application');
@@ -65,7 +64,7 @@ my $tag_title;
 my $tag_artist;
 my $tag_play_date;
 
-print "Downloading XML data. This will take a while...\n";
+print "Processing XML data. This will take a while...\n";
 while(1) {
 
 	$url = $recent_tracks_url;
