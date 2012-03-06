@@ -23,7 +23,7 @@ my $use_cache = 1;		# <= set 1 to cache Last.fm data
 # Script static variables
 my $chart_list_url    = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklychartlist.xml';
 my $weekly_chart_url  = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklytrackchart.xml?from=<FROM>&to=<TO>';
-my $cache_file_format = '\\<USER>-<FROM>-<TO>.xml';
+my $cache_file_format = '\\<USER>-<ID>-<FROM>-<TO>.xml';
 my $version = 'v0.3 (06.03.2012)';
 
 # Script dynamic variables
@@ -78,6 +78,7 @@ for my $i (0 .. $weeks_charts_data->getLength-1) {
 	$cache_file =~ s/<USER>/$username/g;
 	$cache_file =~ s/<FROM>/$from/g;
 	$cache_file =~ s/<TO>/$to/g;
+	$cache_file =~ s/<ID>/($i+1)/g;
 
 	print sprintf("Reading weekly track chart for week %3d of %3d...", $i + 1, $weeks_charts_data->getLength);
 
