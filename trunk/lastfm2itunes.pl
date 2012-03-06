@@ -16,7 +16,7 @@ $Win32::OLE::CP = CP_UTF8;
 my $parser = new XML::DOM::Parser;
 
 # User static settings
-my $username = '';		# <= Put your username here
+my $username = 'TedIrens';		# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
@@ -72,7 +72,10 @@ while(1) {
 	$url =~ s/<PAGE>/$page/g;
 
 	eval { $rc_data = $parser->parsefile($url) };
-	next unless($rc_data);
+	unless($rc_data) {
+		print "Page $page contains errors!\n";
+		if($page < $pages) { next; } else { last; }
+	}
 
 	$rc_root = $rc_data->getElementsByTagName("recenttracks");
 
@@ -80,18 +83,34 @@ while(1) {
 	$total     = $rc_root->item(0)->getAttribute("total");
 	$rc_tracks = $rc_root->item(0)->getElementsByTagName("track");
 
+	print "Parsing page $page of $pages\n";
+
 	for my $j (0 .. $rc_tracks->getLength-1) {
 		$track = $rc_tracks->item($j);
 		next if ($track->getAttribute("nowplaying") eq "true");
 
-		$tag_title = $track->getElementsByTagName("name")->item(0)->getFirstChild->getData();
-		$tag_artist = $track->getElementsByTagName("artist")->item(0)->getFirstChild->getData();
+		$tag_title = lc($track->getElementsByTagName("name")->item(0)->getFirstChild->getData());
+		$tag_artist = lc($track->getElementsByTagName("artist")->item(0)->getFirstChild->getData());
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
-		$scrobbles ++;
-		$lastfm_track_playcount{lc($tag_artist)}{lc($tag_title)} ++ ;
-		if($tag_play_date > $lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)}) {
-			$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = $tag_play_date; 
+
+	
+		if($lastfm_track_playlast{$tag_artist}{$tag_title} == $tag_play_date) {
+			next;
+		} elsif($lastfm_track_playlast{$tag_artist}{$tag_title} < $tag_play_date) {
+			$lastfm_track_playlast{$tag_artist}{$tag_title} = $tag_play_date; 
 		}
+
+#		if(exists($lastfm_track_playcount{$tag_artist}{$tag_title})) {
+		$lastfm_track_playcount{$tag_artist}{$tag_title} ++;
+#		} else {
+#			$lastfm_track_playcount{$tag_artist}{$tag_title} = 1;
+#		}
+
+
+		if(($tag_artist eq 'brian eno') and ($tag_title eq 'shadow')) {
+			print timetostr($tag_play_date), " (".$tag_play_date.") page $page\n";
+		}
+
 	}
 
 	if($page >= $pages) {
@@ -102,7 +121,7 @@ while(1) {
 
 }
 
-print "\nProcessing iTunes library...\n";
+print "Processing iTunes library...\n";
 my $iTunes_LIB = $iTunes->LibraryPlaylist->Tracks;
 
 my $trk;
@@ -110,20 +129,25 @@ my $tmp_count;
 my $tmp_last;
 my $processed = 0;
 my $tmp_utc;
+my $trk_artist;
+my $trk_title;
 
 if($iTunes_LIB) {
 	for my $t (1 .. $iTunes_LIB->Count) {
 		$trk = $iTunes_LIB->Item($t);
-		next unless($trk->kind() == 1);
-		next unless(exists($lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())}));
-		$tmp_count = $lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())};
-		$tmp_utc = $lastfm_track_playlast{lc($trk->artist())}{lc($trk->name())};
-		$tmp_last = timetostr($tmp_utc);
+		$trk_artist = lc($trk->artist());
+		$trk_title = lc($trk->name());
 
+		next unless($trk->kind() == 1);
+		next unless(exists($lastfm_track_playcount{$trk_artist}{$trk_title}));
+
+		$tmp_count = $lastfm_track_playcount{$trk_artist}{$trk_title};
+		$tmp_utc   = $lastfm_track_playlast{$trk_artist}{$trk_title};
+		$tmp_last  = timetostr($tmp_utc);
 		$processed = 0;
 
-		if($trk->playedCount() < $tmp_count) {
-			printf("Updating \"%s\": setting playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
+		if($trk->playedCount() != $tmp_count) {
+			printf("Updating \"%s\": updating playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
 			$trk->{playedCount} = $tmp_count;
 			$processed = 1;
 		}
@@ -153,6 +177,7 @@ foreach my $k_artist (keys %lastfm_track_playcount) {
 	}
 }
 
+print  "Done!\n\nStatistics:\n";
 print  "+---------- iTunes Library ---------+\n";
 printf "| Number of tracks total | %8d |\n", $iTunes_LIB->Count;
 printf "| Number of processed    | %8d |\n", $processed_tracks;
@@ -165,7 +190,7 @@ print  "+-----------------------------------+\n\n";
 
 undef $iTunes_LIB, $iTunes;
 
-print "\nDone! Press <ENTER> to exit...\n";
+print "Press <ENTER> to exit...\n";
 <>;
 
 
