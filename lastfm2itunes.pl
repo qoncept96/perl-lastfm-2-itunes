@@ -21,7 +21,7 @@ my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
-my $version = 'v0.4 (06.03.2012)';
+my $version = 'v0.4 (07.03.2012)';
 
 # Script dynamic variables
 my %lastfm_track_playcount = ();
