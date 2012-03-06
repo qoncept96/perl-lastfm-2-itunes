@@ -23,6 +23,7 @@ my $use_cache = 1;		# <= set 1 to cache Last.fm data
 # Script static variables
 my $chart_list_url    = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklychartlist.xml';
 my $weekly_chart_url  = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklytrackchart.xml?from=<FROM>&to=<TO>';
+my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
 my $cache_file_format = '\\<USER>-<ID>-<FROM>-<TO>.xml';
 my $version = 'v0.3 (06.03.2012)';
 
