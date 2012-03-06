@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use FindBin qw($Bin);
-use strict;
+#use strict;
 use XML::DOM;
 use Class::Struct;
 use Encode;
@@ -18,14 +18,11 @@ my $parser = new XML::DOM::Parser;
 # User static settings
 my $username = 'TedIrens';		# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
-my $use_cache = 1;		# <= set 1 to cache Last.fm data
+my $timezone_comp = 7200;     # GMT+x seconds
 
 # Script static variables
-my $chart_list_url    = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklychartlist.xml';
-my $weekly_chart_url  = 'http://ws.audioscrobbler.com/2.0/user/<USER>/weeklytrackchart.xml?from=<FROM>&to=<TO>';
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
-my $cache_file_format = '\\<USER>-<ID>-<FROM>-<TO>.xml';
-my $version = 'v0.3 (06.03.2012)';
+my $version = 'v0.4 (06.03.2012)';
 
 # Script dynamic variables
 my %lastfm_track_playcount = ();
@@ -34,12 +31,6 @@ my %lastfm_track_playlast = ();
 # statistic variables
 my $processed_tracks = 0;
 my $skipped_tracks = 0;
-
-# Cache section
-my $cache_dir = $Bin . "\\cache";
-if($use_cache) {
-	mkdir $cache_dir unless(-d $cache_dir);
-}
 
 print "iTunes Library Updater " . $version . "\n";
 print "Copyright (c) 2012 Roman Gemini (roman_gemini\@ukr.net)\n\n";
@@ -50,7 +41,6 @@ if($username eq '') {
 	exit;
 }
 print "Debug messages : " . ($verbose ? "YES" : "NO") . "\n";
-print "Use cache      : " . ($use_cache ? "YES" : "NO") . "\n\n";
 
 print "Trying to connect to iTunes scripting interface...";
 my $iTunes = Win32::OLE->GetActiveObject('iTunes.Application');
@@ -58,93 +48,80 @@ unless ($iTunes) { $iTunes = new Win32::OLE('iTunes.Application'); }
 unless ($iTunes) { print "Error!\n"; die("Couldn't connect to iTunes!"); }
 print "OK\n";
 
-print "\nFetching week charts...\n";
-my $url = $chart_list_url;
-$url =~ s/<USER>/$username/g;
-my $charts_data = $parser->parsefile($url);
-my $root_charts_data = $charts_data->getElementsByTagName("weeklychartlist") || die("Can't parse charts list XML!");
-my $weeks_charts_data = $root_charts_data->item(0)->getElementsByTagName("chart") || die("Can't parse charts list XML!");
+my $page = 1;
+my $pages = 1;
+my $scrobbles = 0;
 
-for my $i (0 .. $weeks_charts_data->getLength-1) {
-	my $item = $weeks_charts_data->item($i);
-	my $from = $item->getAttribute("from");
-	my $to = $item->getAttribute("to");
+# define variables
+my $url;
+my $total = 0;
 
-	my $w_url = $weekly_chart_url;
-	$w_url =~ s/<USER>/$username/g;
-	$w_url =~ s/<FROM>/$from/g;
-	$w_url =~ s/<TO>/$to/g;
+my $rc_data;
+my $rc_root;
+my $rc_tracks;
 
-	my $cache_file = $cache_dir . $cache_file_format;
-	$cache_file =~ s/<USER>/$username/g;
-	$cache_file =~ s/<FROM>/$from/g;
-	$cache_file =~ s/<TO>/$to/g;
-	$cache_file =~ s/<ID>/($i+1)/g;
+my $track;
+my $tag_title;
+my $tag_artist;
+my $tag_play_date;
 
-	print sprintf("Reading weekly track chart for week %3d of %3d...", $i + 1, $weeks_charts_data->getLength);
+print "Downloading XML data. This will take a while...\n";
+while(1) {
 
-	my $raw_data; 
-	my $cache_trigr = 0;
+	$url = $recent_tracks_url;
+	$url =~ s/<USER>/$username/g;
+	$url =~ s/<PAGE>/$page/g;
 
-	if(-e $cache_file) {
-		open XML, "<", $cache_file;
-		$raw_data = join('', <XML>);
-		close XML;
-	} else {
-		unless($raw_data = get($w_url)) {
-			print "Error!\n";
-			die("Can't download xml data!");
+	eval { $rc_data = $parser->parsefile($url) };
+	next unless($rc_data);
+
+	$rc_root = $rc_data->getElementsByTagName("recenttracks");
+
+	$pages     = $rc_root->item(0)->getAttribute("totalPages");
+	$total     = $rc_root->item(0)->getAttribute("total");
+	$rc_tracks = $rc_root->item(0)->getElementsByTagName("track");
+
+	for my $j (0 .. $rc_tracks->getLength-1) {
+		$track = $rc_tracks->item($j);
+		next if ($track->getAttribute("nowplaying") eq "true");
+
+		$tag_title = $track->getElementsByTagName("name")->item(0)->getFirstChild->getData();
+		$tag_artist = $track->getElementsByTagName("artist")->item(0)->getFirstChild->getData();
+		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
+		$scrobbles ++;
+		$lastfm_track_playcount{lc($tag_artist)}{lc($tag_title)} ++ ;
+		if($tag_play_date > $lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)}) {
+			$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = $tag_play_date; 
 		}
-		$cache_trigr = 1;
-		usleep(250);
 	}
 
-	my $week_data;
-	eval { $week_data = $parser->parse($raw_data) };
-	unless($week_data) {
-		print "Invalid XML data!\n";
-		next;
+	if($page >= $pages) {
+		last;
+	} else {
+		$page ++;
 	}
-	
-	print "OK\n";
-
-	# Save cache file
-	if(($i < $weeks_charts_data->getLength-1) and $use_cache and $cache_trigr) {
-		open XML, ">", $cache_file;
-		binmode XML, ":utf8";
-		print XML $raw_data;
-		close XML;
-	}
-
-	my $week_root = $week_data->getElementsByTagName("weeklytrackchart");
-	my $week_tracks = $week_root->item(0)->getElementsByTagName("track");
-
-	printf("XML file size: %d bytes, number of tracks: %d\n", length($raw_data), $week_tracks->getLength) if($verbose);
-
-	for my $j (0 .. $week_tracks->getLength-1) {
-		my $track = $week_tracks->item($j);
-		my $tag_title = $track->getElementsByTagName("name")->item(0)->getFirstChild->getData();
-		my $tag_artist = $track->getElementsByTagName("artist")->item(0)->getFirstChild->getData();
-		my $tag_play_count = $track->getElementsByTagName("playcount")->item(0)->getFirstChild->getData();
-		print sprintf("[v] Track \"%s\" played %d time(s)\n", _866("$tag_artist - $tag_title"), $tag_play_count) if($verbose);
-
-		$lastfm_track_playcount{lc($tag_artist)}{lc($tag_title)} += $tag_play_count;
-		$lastfm_track_playlast{lc($tag_artist)}{lc($tag_title)} = strftime("%d.%m.%Y %H:%M:%S", localtime($to));
-	}
-
 
 }
 
 print "\nProcessing iTunes library...\n";
 my $iTunes_LIB = $iTunes->LibraryPlaylist->Tracks;
+
+my $trk;
+my $tmp_count;
+my $tmp_last;
+my $processed = 0;
+my $tmp_utc;
+
 if($iTunes_LIB) {
 	for my $t (1 .. $iTunes_LIB->Count) {
-		my $trk = $iTunes_LIB->Item($t);
+		$trk = $iTunes_LIB->Item($t);
 		next unless($trk->kind() == 1);
 		next unless(exists($lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())}));
-		my $tmp_count = $lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())};
-		my $tmp_last = $lastfm_track_playlast{lc($trk->artist())}{lc($trk->name())};
-		my $processed = 0;
+		$tmp_count = $lastfm_track_playcount{lc($trk->artist())}{lc($trk->name())};
+		$tmp_utc = $lastfm_track_playlast{lc($trk->artist())}{lc($trk->name())};
+		$tmp_last = timetostr($tmp_utc);
+
+		$processed = 0;
 
 		if($trk->playedCount() < $tmp_count) {
 			printf("Updating \"%s\": setting playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
@@ -152,9 +129,9 @@ if($iTunes_LIB) {
 			$processed = 1;
 		}
 
-		if(strtotime($trk->playedDate()) <= strtotime($tmp_last)) {
+		if(strtotime($trk->playedDate()) < strtotime($tmp_last)) {
 			printf("Updating \"%s\": setting playedDate[%s] => playedDate[%s]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedDate(), $tmp_last);
-			$trk->{playedDate} = $tmp_last;
+			$trk->{playedDate} = timetostrGM($tmp_utc);
 			$processed = 1;
 		}
 
@@ -197,14 +174,17 @@ sub _866 {
 	return encode("cp866", shift);
 }
 
+sub timetostr {	return strftime("%d.%m.%Y %H:%M:%S", localtime(shift)); }
+sub timetostrGM { return strftime("%d.%m.%Y %H:%M:%S", gmtime(shift)); }
+
 sub strtotime {
 	my $date = shift;
 	my @d;
 	# YYYY-MM-DD HH:MM:SS
-	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})\s(\d{2})[:](\d{2})[:](\d{2})/) {	return timelocal(@d[5,4,3,2,1,0]); }
+	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})\s(\d{2})[:](\d{2})[:](\d{2})/) {	$d[1] --; return timelocal(@d[5,4,3,2,1,0]); }
 	# DD.MM.YYYY HH:MM:SS
-	if(@d = $date =~ m/(\d{2})[\.](\d{2})[\.](\d{4})\s(\d{2})[:](\d{2})[:](\d{2})/) { return timelocal(@d[5,4,3,0,1,2]); }
+	if(@d = $date =~ m/(\d{2})[\.](\d{2})[\.](\d{4})\s(\d{1,2})[:](\d{2})[:](\d{2})/) { $d[1] --; return timelocal(@d[5,4,3,0,1,2]); }
 	# YYYY-MM-DD
-	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})/) { return timelocal(0, 0, 0, @d[2,1,0]); }
+	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})/) { $d[1] --; return timelocal(0, 0, 0, @d[2,1,0]); }
 	return -1;
 }
