@@ -186,6 +186,8 @@ printf "| Number of tracks       | %8d |\n", $l_tracks;
 printf "| Number of scrobbles    | %8d |\n", $l_plays;
 print  "+-----------------------------------+\n\n";
 
+undef $iTunes_LIB, $iTunes;
+
 print "\nDone! Press <ENTER> to exit...\n";
 <>;
 
