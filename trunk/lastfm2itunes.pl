@@ -39,7 +39,7 @@ my $cache_file = $Bin . "\\cache.dat";
 
 # User static settings
 my $username = 'TedIrens';	# <= Put your username here
-my $verbose = 0;		# <= set 1 to enable verbose output
+my $verbose = 1;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
@@ -54,7 +54,7 @@ my $processed_tracks = 0;
 my $skipped_tracks = 0;
 
 print "iTunes Library Updater " . $version . "\n";
-print "Copyright (c) 2012 Roman Gemini (roman_gemini\@ukr.net)\n\n";
+print "Copyright (c) 2012 Roman Gemini (roman_gemini\@ukr.net / woobind.org.ua)\n\n";
 if($username eq '') {
 	print "Please, set variable '\$username' first!\n";
 	print "Press <ENTER> to exit...";
@@ -97,6 +97,8 @@ P1: while(1) {
 	$url =~ s/<USER>/$username/g;
 	$url =~ s/<PAGE>/$page/g;
 
+	print "$url\n" if($verbose);
+
 	eval { $rc_data = $parser->parsefile($url) };
 	unless($rc_data) {
 		print "Page $page contains errors!\n";
@@ -119,7 +121,7 @@ P1: while(1) {
 		$tag_artist = lc($track->getElementsByTagName("artist")->item(0)->getFirstChild->getData());
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
 		
-	        $last_date = $tag_play_date if($tag_play_date > $last_date);
+	    $last_date = $tag_play_date if($tag_play_date > $last_date);
 		last P1 if($tag_play_date <= $cache_last_date);
 
 		if($lastfm_track_playlast{$tag_artist}{$tag_title} < $tag_play_date) {
@@ -127,6 +129,7 @@ P1: while(1) {
 		}
 
 		$lastfm_track_playcount{$tag_artist}{$tag_title} ++;
+		print _866("$tag_artist - $tag_title - " . timetostr($tag_play_date)), "\n";
 
 	}
 
@@ -181,6 +184,7 @@ if($iTunes_LIB) {
 			$processed_tracks ++;
 		} else {
 			$skipped_tracks ++;
+			printf("Skipping \"%s\"\n", _866($trk->artist() . " - " . $trk->name()));
 		}
 	}
 }
@@ -198,7 +202,7 @@ foreach my $k_artist (keys %lastfm_track_playcount) {
 
 print  "Done!\n\nStatistics:\n";
 print  "+--------------------- iTunes Library ---------------------+\n";
-printf "| Number of tracks total                        | %8d |\n", $iTunes_LIB->Count;
+printf "| Number of tracks in library                   | %8d |\n", $iTunes_LIB->Count;
 printf "| Number of processed                           | %8d |\n", $processed_tracks;
 printf "| Number of skipped                             | %8d |\n", $skipped_tracks;
 print  "+--------------------- Last.fm Charts ---------------------+\n";
