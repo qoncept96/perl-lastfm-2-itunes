@@ -39,7 +39,7 @@ my $cache_file = $Bin . "\\cache.dat";
 
 # User static settings
 my $username = 'TedIrens';	# <= Put your username here
-my $verbose = 1;		# <= set 1 to enable verbose output
+my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
@@ -129,7 +129,7 @@ P1: while(1) {
 		}
 
 		$lastfm_track_playcount{$tag_artist}{$tag_title} ++;
-		print _866("$tag_artist - $tag_title - " . timetostr($tag_play_date)), "\n";
+		print _866("$tag_artist - $tag_title - " . timetostr($tag_play_date)), "\n" if($verbose);
 
 	}
 
@@ -168,7 +168,7 @@ if($iTunes_LIB) {
 		$tmp_last  = timetostr($tmp_utc);
 		$processed = 0;
 
-		if($trk->playedCount() > $tmp_count) {
+		if($trk->playedCount() < $tmp_count) {
 			printf("Updating \"%s\": updating playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
 			$trk->{playedCount} = $tmp_count;
 			$processed = 1;
@@ -184,7 +184,7 @@ if($iTunes_LIB) {
 			$processed_tracks ++;
 		} else {
 			$skipped_tracks ++;
-			printf("Skipping \"%s\"\n", _866($trk->artist() . " - " . $trk->name()));
+			printf("Skipping \"%s\"\n", _866($trk->artist() . " - " . $trk->name())) if($verbose);
 		}
 	}
 }
