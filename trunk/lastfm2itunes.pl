@@ -16,7 +16,7 @@ $Win32::OLE::CP = CP_UTF8;
 my $parser = new XML::DOM::Parser;
 
 # User static settings
-my $username = 'TedIrens';		# <= Put your username here
+my $username = '';		# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
@@ -137,7 +137,7 @@ if($iTunes_LIB) {
 		$tmp_last  = timetostr($tmp_utc);
 		$processed = 0;
 
-		if($trk->playedCount() != $tmp_count) {
+		if($trk->playedCount() < $tmp_count) {
 			printf("Updating \"%s\": updating playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
 			$trk->{playedCount} = $tmp_count;
 			$processed = 1;
@@ -169,15 +169,15 @@ foreach my $k_artist (keys %lastfm_track_playcount) {
 }
 
 print  "Done!\n\nStatistics:\n";
-print  "+---------- iTunes Library ---------+\n";
-printf "| Number of tracks total | %8d |\n", $iTunes_LIB->Count;
-printf "| Number of processed    | %8d |\n", $processed_tracks;
-printf "| Number of skipped      | %8d |\n", $skipped_tracks;
-print  "+---------- Last.fm Charts ---------+\n";
-printf "| Number of artists      | %8d |\n", $l_artists;
-printf "| Number of tracks       | %8d |\n", $l_tracks;
-printf "| Number of scrobbles    | %8d |\n", $l_plays;
-print  "+-----------------------------------+\n\n";
+print  "+------------------- iTunes Library -----------------------+\n";
+printf "| Number of tracks total                        | %8d |\n", $iTunes_LIB->Count;
+printf "| Number of processed                           | %8d |\n", $processed_tracks;
+printf "| Number of skipped                             | %8d |\n", $skipped_tracks;
+print  "+------------------- Last.fm Charts -----------------------+\n";
+printf "| Number of artists                             | %8d |\n", $l_artists;
+printf "| Number of tracks                              | %8d |\n", $l_tracks;
+printf "| Number of scrobbles                           | %8d |\n", $l_plays;
+print  "+----------------------------------------------------------+\n\n";
 
 undef $iTunes_LIB, $iTunes;
 
@@ -197,7 +197,7 @@ sub strtotime {
 	my @d;
 	# YYYY-MM-DD HH:MM:SS
 	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})\s(\d{2})[:](\d{2})[:](\d{2})/) {	$d[1] --; return timelocal(@d[5,4,3,2,1,0]); }
-	# DD.MM.YYYY HH:MM:SS
+	# DD.MM.YYYY H:MM:SS
 	if(@d = $date =~ m/(\d{2})[\.](\d{2})[\.](\d{4})\s(\d{1,2})[:](\d{2})[:](\d{2})/) { $d[1] --; return timelocal(@d[5,4,3,0,1,2]); }
 	# YYYY-MM-DD
 	if(@d = $date =~ m/(\d{4})[-](\d{2})[-](\d{2})/) { $d[1] --; return timelocal(0, 0, 0, @d[2,1,0]); }
