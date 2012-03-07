@@ -86,6 +86,7 @@ my $tag_title;
 my $tag_artist;
 my $tag_play_date;
 my $last_date = 0;
+my $recent_pos = 0;
 
 my $cache_last_date = 0;
 load_cache();
@@ -175,7 +176,7 @@ if($iTunes_LIB) {
 		}
 
 		if(strtotime($trk->playedDate()) < strtotime($tmp_last)) {
-			printf("Updating \"%s\": setting playedDate[%s] => playedDate[%s]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedDate(), $tmp_last);
+			printf("Updating \"%s\": updating playedDate[%s] => playedDate[%s]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedDate(), $tmp_last);
 			$trk->{playedDate} = timetostrGM($tmp_utc);
 			$processed = 1;
 		}
