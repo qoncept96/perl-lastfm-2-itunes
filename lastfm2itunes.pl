@@ -1,5 +1,27 @@
 #!/usr/bin/perl
 
+=comment
+***************************************************************************
+*   Copyright (C) 2012 by Roman Gemini                                    *
+*   roman_gemini@ukr.net                                                  *
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 2 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+*   This program is distributed in the hope that it will be useful,       *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+*   GNU General Public License for more details.                          *
+*                                                                         *
+*   You should have received a copy of the GNU General Public License     *
+*   along with this program; if not, write to the                         *
+*   Free Software Foundation, Inc.,                                       *
+*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+***************************************************************************
+=cut
+
 use FindBin qw($Bin);
 use strict;
 use XML::DOM;
@@ -8,7 +30,6 @@ use Encode;
 use POSIX qw(strftime);
 use LWP::Simple;
 use Time::Local;
-use Time::HiRes qw(usleep);
 
 use Win32::OLE::Variant;
 use Win32::OLE 'CP_UTF8';
@@ -17,7 +38,7 @@ my $parser = new XML::DOM::Parser;
 my $cache_file = $Bin . "\\cache.dat";
 
 # User static settings
-my $username = 'TedIrens';		# <= Put your username here
+my $username = 'TedIrens';	# <= Put your username here
 my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
