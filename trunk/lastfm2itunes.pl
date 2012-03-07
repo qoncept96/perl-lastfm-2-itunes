@@ -165,7 +165,7 @@ if($iTunes_LIB) {
 		$tmp_last  = timetostr($tmp_utc);
 		$processed = 0;
 
-		if($trk->playedCount() != $tmp_count) {
+		if($trk->playedCount() > $tmp_count) {
 			printf("Updating \"%s\": updating playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
 			$trk->{playedCount} = $tmp_count;
 			$processed = 1;
