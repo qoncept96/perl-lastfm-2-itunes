@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use FindBin qw($Bin);
-#use strict;
+use strict;
 use XML::DOM;
 use Class::Struct;
 use Encode;
@@ -21,7 +21,7 @@ my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
-my $version = 'v0.4 (07.03.2012)';
+my $version = 'v0.5 (07.03.2012)';
 
 # Script dynamic variables
 my %lastfm_track_playcount = ();
@@ -100,16 +100,7 @@ while(1) {
 			$lastfm_track_playlast{$tag_artist}{$tag_title} = $tag_play_date; 
 		}
 
-#		if(exists($lastfm_track_playcount{$tag_artist}{$tag_title})) {
 		$lastfm_track_playcount{$tag_artist}{$tag_title} ++;
-#		} else {
-#			$lastfm_track_playcount{$tag_artist}{$tag_title} = 1;
-#		}
-
-
-		if(($tag_artist eq 'brian eno') and ($tag_title eq 'shadow')) {
-			print timetostr($tag_play_date), " (".$tag_play_date.") page $page\n";
-		}
 
 	}
 
