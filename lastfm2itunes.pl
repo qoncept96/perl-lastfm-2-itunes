@@ -239,16 +239,16 @@ sub dump_cache() {
 	open D, ">", $cache_file;
 	binmode D, ":utf8";
 	print D $header;
-	print D pack "V", length($username);
+	print D pack "v", length($username);
 	print D $username;
 	print D pack "V", $last_date;
 	foreach my $arti (keys %lastfm_track_playcount) {
 		foreach my $titl (keys %{$lastfm_track_playcount{$arti}}) {
-			print D pack "V", length($arti);
+			print D pack "v", length($arti);
 			print D $arti;
-			print D pack "V", length($titl);
+			print D pack "v", length($titl);
 			print D $titl;
-			print D pack "V", $lastfm_track_playcount{$arti}{$titl};
+			print D pack "v", $lastfm_track_playcount{$arti}{$titl};
 			print D pack "V", $lastfm_track_playlast{$arti}{$titl};
 			$stati += $lastfm_track_playcount{$arti}{$titl};
 		}
@@ -270,8 +270,8 @@ sub load_cache() {
 	read D, $ret, length($header);
 	if($ret ne 'myCache') { close D; return undef; }
 
-	read D, $len, 4;
-	$len = unpack "V", $len;
+	read D, $len, 2;
+	$len = unpack "v", $len;
 	read D, $ret, $len;
 	if($ret ne $username) { close D; return undef; }
 
@@ -279,16 +279,16 @@ sub load_cache() {
 	$cache_last_date = unpack "V", $len;
 
 	while(!eof(D)) {
-		read D, $len, 4;
-		$len = unpack "V", $len;
+		read D, $len, 2;
+		$len = unpack "v", $len;
 		read D, $arti, $len;
 
-		read D, $len, 4;
-		$len = unpack "V", $len;
+		read D, $len, 2;
+		$len = unpack "v", $len;
 		read D, $titl, $len;
 
-		read D, $len, 4;
-		$lastfm_track_playcount{$arti}{$titl} = unpack "V", $len;
+		read D, $len, 2;
+		$lastfm_track_playcount{$arti}{$titl} = unpack "v", $len;
 		$stati += $lastfm_track_playcount{$arti}{$titl};
 
 		read D, $len, 4;
