@@ -127,7 +127,7 @@ P1: while(1) {
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
 
 		$recent_pos = $total - (($page-1)*200+$j);
-		printf "New scrobble: #%d: '%s' played at '%s'\n", $recent_pos, _866($tag_artist . " - " .$tag_title), timetostr($tag_play_date);
+		printf "New scrobble #%d: played %s '%s'\n", $recent_pos, timetostr($tag_play_date), _866($tag_artist . " - " .$tag_title);
 		$last_pos = $recent_pos if($recent_pos > $last_pos);
 		last P1 if($recent_pos <= $cache_pos);
 
