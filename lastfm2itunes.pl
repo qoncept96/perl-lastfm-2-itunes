@@ -43,7 +43,7 @@ my $verbose = 0;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
-my $version = 'v1.0 (07.03.2012)';
+my $version = 'v1.1 (09.03.2012)';
 
 # Script dynamic variables
 my %lastfm_track_playcount = ();
@@ -86,7 +86,11 @@ my $tag_title;
 my $tag_artist;
 my $tag_play_date;
 my $last_date = 0;
+
 my $recent_pos = 0;
+my $last_pos = 0;
+my $cache_pos = 0;
+my $k;
 
 my $cache_last_date = 0;
 load_cache();
@@ -121,9 +125,11 @@ P1: while(1) {
 		$tag_title = lc($track->getElementsByTagName("name")->item(0)->getFirstChild->getData());
 		$tag_artist = lc($track->getElementsByTagName("artist")->item(0)->getFirstChild->getData());
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
-		
-	    $last_date = $tag_play_date if($tag_play_date > $last_date);
-		last P1 if($tag_play_date <= $cache_last_date);
+
+		$recent_pos = $total - (($page-1)*200+$j);
+		printf "New scrobble: #%d: '%s' played at '%s'\n", $recent_pos, _866($tag_artist . " - " .$tag_title), timetostr($tag_play_date);
+		$last_pos = $recent_pos if($recent_pos > $last_pos);
+		last P1 if($recent_pos <= $cache_pos);
 
 		if($lastfm_track_playlast{$tag_artist}{$tag_title} < $tag_play_date) {
 			$lastfm_track_playlast{$tag_artist}{$tag_title} = $tag_play_date; 
@@ -242,7 +248,7 @@ sub dump_cache() {
 	print D $header;
 	print D pack "v", length($username);
 	print D $username;
-	print D pack "V", $last_date;
+	print D pack "V", $last_pos;
 	foreach my $arti (keys %lastfm_track_playcount) {
 		foreach my $titl (keys %{$lastfm_track_playcount{$arti}}) {
 			print D pack "v", length($arti);
@@ -255,7 +261,7 @@ sub dump_cache() {
 		}
 	}
 	close D;
-	print "$stati scrobbles\n";
+	print "$stati scrobbles (marker at #$last_pos)\n";
 }
 
 sub load_cache() {
@@ -277,7 +283,7 @@ sub load_cache() {
 	if($ret ne $username) { close D; return undef; }
 
 	read D, $len, 4;
-	$cache_last_date = unpack "V", $len;
+	$cache_pos = unpack "V", $len;
 
 	while(!eof(D)) {
 		read D, $len, 2;
@@ -296,5 +302,5 @@ sub load_cache() {
 		$lastfm_track_playlast{$arti}{$titl} = unpack "V", $len;
 	}
 	close D;
-	print "$stati scrobbles\n";
+	print "$stati scrobbles (marker at #$cache_pos)\n";
 }
