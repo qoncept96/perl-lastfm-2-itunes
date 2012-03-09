@@ -39,7 +39,7 @@ my $cache_file = $Bin . "\\cache.dat";
 
 # User static settings
 my $username = 'TedIrens';	# <= Put your username here
-my $verbose = 0;		# <= set 1 to enable verbose output
+my $verbose = 1;		# <= set 1 to enable verbose output
 
 # Script static variables
 my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
@@ -102,7 +102,7 @@ P1: while(1) {
 	$url =~ s/<USER>/$username/g;
 	$url =~ s/<PAGE>/$page/g;
 
-	print "$url\n" if($verbose);
+	print "$url\n" if($verbose > 1);
 
 	eval { $rc_data = $parser->parsefile($url) };
 	unless($rc_data) {
@@ -127,7 +127,6 @@ P1: while(1) {
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
 
 		$recent_pos = $total - (($page-1)*200+$j);
-		printf "New scrobble #%d: played %s '%s'\n", $recent_pos, timetostr($tag_play_date), _866($tag_artist . " - " .$tag_title);
 		$last_pos = $recent_pos if($recent_pos > $last_pos);
 		last P1 if($recent_pos <= $cache_pos);
 
@@ -135,8 +134,8 @@ P1: while(1) {
 			$lastfm_track_playlast{$tag_artist}{$tag_title} = $tag_play_date; 
 		}
 
+		printf "New scrobble #%d played %s: '%s'\n", $recent_pos, timetostr($tag_play_date), _866($tag_artist . " - " .$tag_title) if($verbose > 0);
 		$lastfm_track_playcount{$tag_artist}{$tag_title} ++;
-		print _866("$tag_artist - $tag_title - " . timetostr($tag_play_date)), "\n" if($verbose);
 
 	}
 
@@ -191,7 +190,7 @@ if($iTunes_LIB) {
 			$processed_tracks ++;
 		} else {
 			$skipped_tracks ++;
-			printf("Skipping \"%s\"\n", _866($trk->artist() . " - " . $trk->name())) if($verbose);
+			printf("Skipping \"%s\"\n", _866($trk->artist() . " - " . $trk->name())) if($verbose > 1);
 		}
 	}
 }
