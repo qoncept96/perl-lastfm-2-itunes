@@ -61,7 +61,7 @@ if($username eq '') {
 	<>;
 	exit;
 }
-print "Debug messages : " . ($verbose ? "YES" : "NO") . "\n\n";
+print "Debug messages: " . ($verbose ? "On" : "Off") . "\n\n";
 
 print "Trying to connect to iTunes scripting interface...";
 my $iTunes = Win32::OLE->GetActiveObject('iTunes.Application');
