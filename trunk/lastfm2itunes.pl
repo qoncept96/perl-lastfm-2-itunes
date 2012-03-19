@@ -175,13 +175,13 @@ if($iTunes_LIB) {
 		$processed = 0;
 
 		if($trk->playedCount() < $tmp_count) {
-			printf("Updating \"%s\": updating playedCount[%d] => playedCount[%d]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count);
+			printf("Updating \"%s\": updating playedCount %d+%d\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedCount(), $tmp_count - $trk->playedCount());
 			$trk->{playedCount} = $tmp_count;
 			$processed = 1;
 		}
 
 		if(strtotime($trk->playedDate()) < strtotime($tmp_last)) {
-			printf("Updating \"%s\": updating playedDate[%s] => playedDate[%s]\n", _866($trk->artist() . " - " . $trk->name()), $trk->playedDate(), $tmp_last);
+			printf("Updating \"%s\": updating playedDate %s\n", _866($trk->artist() . " - " . $trk->name()), $tmp_last);
 			$trk->{playedDate} = timetostrGM($tmp_utc);
 			$processed = 1;
 		}
