@@ -40,9 +40,10 @@ my $cache_file = $Bin . "\\cache.dat";
 # User static settings
 my $username = 'TedIrens';	# <= Put your username here
 my $verbose = 1;		# <= set 1 to enable verbose output
+my $pagesize = 50;
 
 # Script static variables
-my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=50&page=<PAGE>';
+my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=<PAGESIZE>&page=<PAGE>';
 my $version = 'v1.1 (09.03.2012)';
 
 # Script dynamic variables
@@ -101,6 +102,7 @@ P1: while(1) {
 	$url = $recent_tracks_url;
 	$url =~ s/<USER>/$username/g;
 	$url =~ s/<PAGE>/$page/g;
+	$url =~ s/<PAGESIZE>/$pagesize/g;
 
 	print "$url\n" if($verbose > 1);
 
@@ -126,7 +128,7 @@ P1: while(1) {
 		$tag_artist = lc($track->getElementsByTagName("artist")->item(0)->getFirstChild->getData());
 		$tag_play_date = $track->getElementsByTagName("date")->item(0)->getAttribute("uts");
 
-		$recent_pos = $total - (($page-1)*200+$j);
+		$recent_pos = $total - (($page-1)*$pagesize+$j);
 		$last_pos = $recent_pos if($recent_pos > $last_pos);
 		last P1 if($recent_pos <= $cache_pos);
 
