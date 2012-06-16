@@ -42,7 +42,7 @@ my $username = 'TedIrens';	# <= Put your username here
 my $verbose = 1;		# <= set 1 to enable verbose output
 
 # Script static variables
-my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=200&page=<PAGE>';
+my $recent_tracks_url = 'http://ws.audioscrobbler.com/2.0/user/<USER>/recenttracks.xml?limit=50&page=<PAGE>';
 my $version = 'v1.1 (09.03.2012)';
 
 # Script dynamic variables
